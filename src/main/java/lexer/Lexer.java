@@ -90,6 +90,8 @@ public class Lexer {
             case '*' -> add(TokenType.MULTIPLY);
             case '/' -> add(TokenType.DIVIDE);
             case '%' -> add(TokenType.MODULO);
+            case '"' -> stringLiteral();
+            case '\'' -> charLiteral();
             case '<' -> add(sc.match('=') ? TokenType.LE :  TokenType.LT);
             case '>' -> add(sc.match('=') ? TokenType.GE :  TokenType.GT);
             case '!' -> {
@@ -108,21 +110,76 @@ public class Lexer {
     }
 
     private void number() {
-        while(Character.isDigit(sc.peek())) sc.advance();
+        boolean isFloat = false;
+
+        while (Character.isDigit(sc.peek())) sc.advance();
+
+        if (sc.peek() == '.' && Character.isDigit(sc.peekNext())) {
+            isFloat = true;
+            sc.advance();
+            while (Character.isDigit(sc.peek())) sc.advance();
+        }
+
         String text = source.substring(sc.getStartIdx(), sc.getCur());
         char nextChar = sc.peek();
-        if(Character.isAlphabetic(nextChar)) {
-            throw error("Error: Character in int literal");
+
+        if (Character.isAlphabetic(nextChar)) {
+            throw error("Error: Character in number literal");
         }
-        addLiteralInt(text);
+
+        if (isFloat)
+            addLiteral(TokenType.FLOAT_LIT, Float.valueOf(text));
+        else
+            addLiteral(TokenType.INT_LIT, Integer.valueOf(text));
     }
 
+
+    private void stringLiteral() {
+        while (sc.peek() != '"' && !sc.isAtEnd()) {
+            sc.advance();
+        }
+
+        if (sc.isAtEnd()) throw error("Unterminated string literal");
+
+        sc.advance();
+
+        String value = source.substring(sc.getStartIdx() + 1, sc.getCur() - 1);
+        addLiteral(TokenType.STRING_LIT, value);
+    }
+
+    private void charLiteral() {
+        if (sc.isAtEnd() || sc.peekNext() == '\0') throw error("Unterminated char literal");
+
+        char value = sc.advance();
+        if (sc.peek() != '\'') throw error("Unterminated char literal");
+        sc.advance();
+
+        addLiteral(TokenType.CHAR_LIT, value);
+    }
+
+    private void addLiteral(TokenType type, Object literal) {
+        String lex = source.substring(sc.getStartIdx(), sc.getCur());
+        tokens.add(new Token(type, lex, literal, sc.getStartLine(), sc.getStartCol(), sc.getCol() - 1));
+    }
+
+
     private void identifier() {
-        while(isIdentPart(sc.peek())) sc.advance();
+        while (isIdentPart(sc.peek())) sc.advance();
         String text = source.substring(sc.getStartIdx(), sc.getCur());
+
+        if (text.equals("true") || text.equals("false")) {
+            addLiteral(TokenType.BOOL_LIT, Boolean.valueOf(text));
+            return;
+        }
+
+        if (text.equals("and")) { add(TokenType.AND, text); return; }
+        if (text.equals("or")) { add(TokenType.OR, text); return; }
+        if (text.equals("not")) { add(TokenType.NOT, text); return; }
+
         TokenType type = KEYWORDS.getOrDefault(text, TokenType.IDENTIFIER);
         add(type, text);
     }
+
 
     private boolean isIdentStart(char c) {
         return Character.isLetter(c) || c == '_';

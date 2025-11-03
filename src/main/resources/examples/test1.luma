@@ -1,0 +1,5 @@
+var broj: int;
+broj = 5;
+if true {
+    print("Pozdrav!");
+}

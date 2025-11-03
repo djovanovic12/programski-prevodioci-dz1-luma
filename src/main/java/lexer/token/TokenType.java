@@ -33,5 +33,5 @@ public enum TokenType {
     IDENTIFIER, INT_LIT, FLOAT_LIT, BOOL_LIT, CHAR_LIT, STRING_LIT,
 
     // Ostalo
-    NEWLINE, EOF
+    EOF
 }

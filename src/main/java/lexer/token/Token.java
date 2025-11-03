@@ -3,10 +3,10 @@ package lexer.token;
 public class Token {
     public final TokenType type;
     public final String lexeme;
-    public final Integer literal;
+    public final Object literal;
     public final int line, colStart, colEnd;
 
-    public Token(TokenType type, String lexeme, Integer literal, int line, int colStart, int colEnd) {
+    public Token(TokenType type, String lexeme, Object literal, int line, int colStart, int colEnd) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;
